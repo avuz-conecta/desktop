@@ -149,7 +149,6 @@
 		<!-- colored icons -->
 		<file>theme/colored/wizard_logo.png</file>
 		<file>theme/colored/wizard_logo@2x.png</file>
-		<file>theme/colored/wizard_logo.svg</file>
 		<file>theme/colored/folder.png</file>
 		<file>theme/colored/folder@2x.png</file>
 		<file>theme/colored/wizard-files.png</file>

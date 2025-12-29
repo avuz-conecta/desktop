@@ -28,7 +28,9 @@ endif()
 
 set(BIN_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
-include(${CMAKE_SOURCE_DIR}/NEXTCLOUD.cmake)
+# Branding configuration - using AVUZ.cmake for Avuz Conecta branding
+set(OEM_THEME_CMAKE_FILE "${CMAKE_SOURCE_DIR}/AVUZ.cmake" CACHE FILEPATH "Path to OEM branding cmake file" FORCE)
+include(${OEM_THEME_CMAKE_FILE})
 
 set(QT_VERSION_MAJOR "6")
 set(REQUIRED_QT_VERSION "6.8.0")

@@ -5,7 +5,8 @@ include( InstallRequiredSystemLibraries )
 
 set( CPACK_PACKAGE_CONTACT  "Dominik Schmidt <domme@tomahawk-player.org>" )
 
-include("${CMAKE_SOURCE_DIR}/NEXTCLOUD.cmake")
+# Use the OEM theme file set in CMakeLists.txt instead of hardcoding NEXTCLOUD.cmake
+include("${OEM_THEME_CMAKE_FILE}")
 
 include( VERSION.cmake )
 set( CPACK_PACKAGE_VERSION_MAJOR  ${MIRALL_VERSION_MAJOR} )
