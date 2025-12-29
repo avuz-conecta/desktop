@@ -30,6 +30,7 @@
 #endif
 
 #include "nextcloudtheme.h"
+#include "avuztheme.h"
 
 #ifdef THEME_INCLUDE
 #define Mirall OCC // namespace hack to make old themes work
