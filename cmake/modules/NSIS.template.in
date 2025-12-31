@@ -49,7 +49,7 @@
 !define CSYNC_LIBRARY_DIR "@CSYNC_LIBRARY_DIR@"
 !define CSYNC_CONFIG_DIR "@CSYNC_CONFIG_DIR@"
 
-!define NSI_PATH "${source_path}/admin/win/nsi"
+!define NSI_PATH "${SOURCE_PATH}\admin\win\nsi"
 
 ;-----------------------------------------------------------------------------
 ; Installer version
@@ -103,7 +103,7 @@ ReserveFile "${NSISDIR}\Plugins\InstallOptions.dll"
 !include Library.nsh ;Used by the COM registration for shell extensions
 !include x64.nsh ;Used to determine the right arch for the shell extensions
 
-!include ${source_path}/admin/win/nsi/lib/fileassoc.nsh
+!include ${SOURCE_PATH}\admin\win\nsi\lib\fileassoc.nsh
 
 ;-----------------------------------------------------------------------------
 ; Memento selections stored in registry.
@@ -117,9 +117,9 @@ ReserveFile "${NSISDIR}\Plugins\InstallOptions.dll"
 !define MUI_ABORTWARNING
 !define MUI_ICON ${NSI_PATH}\installer.ico
 !define MUI_UNICON ${NSI_PATH}\installer.ico
-!define MUI_WELCOMEFINISHPAGE_BITMAP ${WIN_SETUP_BITMAP_PATH}/welcome.bmp
+!define MUI_WELCOMEFINISHPAGE_BITMAP ${WIN_SETUP_BITMAP_PATH}\welcome.bmp
 !define MUI_HEADERIMAGE
-!define MUI_HEADERIMAGE_BITMAP  ${WIN_SETUP_BITMAP_PATH}/page_header.bmp
+!define MUI_HEADERIMAGE_BITMAP  ${WIN_SETUP_BITMAP_PATH}\page_header.bmp
 !define MUI_COMPONENTSPAGE_SMALLDESC
 ; We removed this, h1 issue 191687
 ;!define MUI_FINISHPAGE_LINK "${APPLICATION_DOMAIN}"
@@ -158,8 +158,8 @@ Page custom PageReinstall PageLeaveReinstall
 ;-----------------------------------------------------------------------------
 !insertmacro MUI_LANGUAGE "English"
 
-!include ${source_path}/admin/win/nsi/l10n/languages.nsh
-!include ${source_path}/admin/win/nsi/l10n/declarations.nsh
+!include ${SOURCE_PATH}\admin\win\nsi\l10n\languages.nsh
+!include ${SOURCE_PATH}\admin\win\nsi\l10n\declarations.nsh
 
 ; Set version strings with english locale
 VIProductVersion "${VERSION}"
@@ -170,7 +170,7 @@ VIAddVersionKey /LANG=${LANG_ENGLISH} "FileVersion" "${VERSION}"
 !macro SETLANG un
    Function ${un}SetLang
       # load the selected language file
-      !include "${source_path}/admin/win/nsi/l10n\English.nsh"
+      !include "${SOURCE_PATH}\admin\win\nsi\l10n\English.nsh"
       StrCmp $LANGUAGE ${LANG_GERMAN} German 0
       StrCmp $LANGUAGE ${LANG_DUTCH} Dutch 0
       StrCmp $LANGUAGE ${LANG_FINNISH} Finnish 0
@@ -187,49 +187,49 @@ VIAddVersionKey /LANG=${LANG_ENGLISH} "FileVersion" "${VERSION}"
       StrCmp $LANGUAGE ${LANG_NORWEGIAN} Norwegian 0
       StrCmp $LANGUAGE ${LANG_PORTUGUESEBR} Brazilian EndLanguageCmp
       German:
-      !include "${source_path}/admin/win/nsi/l10n\German.nsh"
+      !include "${SOURCE_PATH}\admin\win\nsi\l10n\German.nsh"
       Goto EndLanguageCmp
       Dutch:
-      !include "${source_path}/admin/win/nsi/l10n\Dutch.nsh"
+      !include "${SOURCE_PATH}\admin\win\nsi\l10n\Dutch.nsh"
       Goto EndLanguageCmp
       Finnish:
-      !include "${source_path}/admin/win/nsi/l10n\Finnish.nsh"
+      !include "${SOURCE_PATH}\admin\win\nsi\l10n\Finnish.nsh"
       Goto EndLanguageCmp
       Japanese:
-      !include "${source_path}/admin/win/nsi/l10n\Japanese.nsh"
+      !include "${SOURCE_PATH}\admin\win\nsi\l10n\Japanese.nsh"
       Goto EndLanguageCmp
       Slovenian:
-      !include "${source_path}/admin/win/nsi/l10n\Slovenian.nsh"
+      !include "${SOURCE_PATH}\admin\win\nsi\l10n\Slovenian.nsh"
       Goto EndLanguageCmp
       Spanish:
-      !include "${source_path}/admin/win/nsi/l10n\Spanish.nsh"
+      !include "${SOURCE_PATH}\admin\win\nsi\l10n\Spanish.nsh"
       Goto EndLanguageCmp
       Italian:
-      !include "${source_path}/admin/win/nsi/l10n\Italian.nsh"
+      !include "${SOURCE_PATH}\admin\win\nsi\l10n\Italian.nsh"
       Goto EndLanguageCmp
       Estonian:
-      !include "${source_path}/admin/win/nsi/l10n\Estonian.nsh"
+      !include "${SOURCE_PATH}\admin\win\nsi\l10n\Estonian.nsh"
       Goto EndLanguageCmp
       Greek:
-      !include "${source_path}/admin/win/nsi/l10n\Greek.nsh"
+      !include "${SOURCE_PATH}\admin\win\nsi\l10n\Greek.nsh"
       Goto EndLanguageCmp
       Basque:
-      !include "${source_path}/admin/win/nsi/l10n\Basque.nsh"
+      !include "${SOURCE_PATH}\admin\win\nsi\l10n\Basque.nsh"
       Goto EndLanguageCmp
       Galician:
-      !include "${source_path}/admin/win/nsi/l10n\Galician.nsh"
+      !include "${SOURCE_PATH}\admin\win\nsi\l10n\Galician.nsh"
       Goto EndLanguageCmp
       Polish:
-      !include "${source_path}/admin/win/nsi/l10n\Polish.nsh"
+      !include "${SOURCE_PATH}\admin\win\nsi\l10n\Polish.nsh"
       Goto EndLanguageCmp
       Turkish:
-      !include "${source_path}/admin/win/nsi/l10n\Turkish.nsh"
+      !include "${SOURCE_PATH}\admin\win\nsi\l10n\Turkish.nsh"
       Goto EndLanguageCmp
       Brazilian:
-      !include "${source_path}/admin/win/nsi/l10n\PortugueseBR.nsh"
+      !include "${SOURCE_PATH}\admin\win\nsi\l10n\PortugueseBR.nsh"
       Goto EndLanguageCmp
       Norwegian:
-      !include "${source_path}/admin/win/nsi/l10n\Norwegian.nsh"
+      !include "${SOURCE_PATH}\admin\win\nsi\l10n\Norwegian.nsh"
       EndLanguageCmp:
 
    FunctionEnd
