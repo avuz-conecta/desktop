@@ -34,6 +34,7 @@ Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
+Name: "cleandata"; Description: "Remove old configuration and cached data (fresh start)"; GroupDescription: "Clean Installation"; Flags: unchecked
 
 [Files]
 Source: "build-release\bin\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -48,6 +49,13 @@ Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChang
 
 [Registry]
 Root: HKLM; Subkey: "Software\{#MyAppPublisher}\{#MyAppName}"; ValueType: string; ValueName: "InstallDir"; ValueData: "{app}"; Flags: uninsdeletekey
+
+[InstallDelete]
+; Clean old data if user selected the option
+Type: filesandordirs; Name: "{userappdata}\Avuz"; Tasks: cleandata
+Type: filesandordirs; Name: "{localappdata}\Avuz"; Tasks: cleandata
+Type: filesandordirs; Name: "{userappdata}\Nextcloud"; Tasks: cleandata
+Type: filesandordirs; Name: "{localappdata}\Nextcloud"; Tasks: cleandata
 
 [INI]
 Filename: "{userappdata}\Avuz\Avuz Conecta\avuzconecta.cfg"; Section: "General"; Key: "language"; String: "pt_BR"
