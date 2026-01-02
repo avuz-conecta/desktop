@@ -25,16 +25,32 @@ Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
 PrivilegesRequired=admin
+CloseApplications=yes
+CloseApplicationsFilter=*.exe
 
 [Languages]
-Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "brazilianportuguese"; MessagesFile: "compiler:Languages\BrazilianPortuguese.isl"
 Name: "portuguese"; MessagesFile: "compiler:Languages\Portuguese.isl"
 Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
+Name: "english"; MessagesFile: "compiler:Default.isl"
+
+[CustomMessages]
+; Portuguese (Brazil)
+brazilianportuguese.CleanInstallGroup=Instalação Limpa
+brazilianportuguese.CleanInstallDesc=Remover configurações antigas e dados em cache (começar do zero)
+; Portuguese (Portugal)
+portuguese.CleanInstallGroup=Instalação Limpa
+portuguese.CleanInstallDesc=Remover configurações antigas e dados em cache (começar do zero)
+; Spanish
+spanish.CleanInstallGroup=Instalación Limpia
+spanish.CleanInstallDesc=Eliminar configuraciones antiguas y datos en caché (comenzar de cero)
+; English
+english.CleanInstallGroup=Clean Installation
+english.CleanInstallDesc=Remove old configuration and cached data (fresh start)
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
-Name: "cleandata"; Description: "Remove old configuration and cached data (fresh start)"; GroupDescription: "Clean Installation"; Flags: unchecked
+Name: "cleandata"; Description: "{cm:CleanInstallDesc}"; GroupDescription: "{cm:CleanInstallGroup}"; Flags: unchecked
 
 [Files]
 Source: "build-release\bin\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -52,14 +68,42 @@ Root: HKLM; Subkey: "Software\{#MyAppPublisher}\{#MyAppName}"; ValueType: string
 
 [InstallDelete]
 ; Clean old data if user selected the option
+; Avuz folders
 Type: filesandordirs; Name: "{userappdata}\Avuz"; Tasks: cleandata
 Type: filesandordirs; Name: "{localappdata}\Avuz"; Tasks: cleandata
+; Nextcloud legacy folders
 Type: filesandordirs; Name: "{userappdata}\Nextcloud"; Tasks: cleandata
 Type: filesandordirs; Name: "{localappdata}\Nextcloud"; Tasks: cleandata
+; Alternative naming (no space)
+Type: filesandordirs; Name: "{userappdata}\AvuzConecta"; Tasks: cleandata
+Type: filesandordirs; Name: "{localappdata}\AvuzConecta"; Tasks: cleandata
 
 [INI]
-Filename: "{userappdata}\Avuz\Avuz Conecta\avuzconecta.cfg"; Section: "General"; Key: "language"; String: "pt_BR"
+; Note: language key must be at root level (no section) as expected by the app
+Filename: "{userappdata}\Avuz\Avuz Conecta\avuzconecta.cfg"; Key: "language"; String: "pt_BR"
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}"
 Type: filesandordirs; Name: "{userappdata}\Avuz\Avuz Conecta"
+
+[Code]
+// Kill running processes before cleanup
+procedure KillRunningProcesses();
+var
+  ResultCode: Integer;
+begin
+  Exec('taskkill.exe', '/F /IM avuzconecta.exe', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  Exec('taskkill.exe', '/F /IM AvuzConecta.exe', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  Exec('taskkill.exe', '/F /IM nextcloud.exe', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+end;
+
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+begin
+  Result := '';
+  if IsTaskSelected('cleandata') then
+  begin
+    KillRunningProcesses();
+    // Give processes time to terminate
+    Sleep(1000);
+  end;
+end;
