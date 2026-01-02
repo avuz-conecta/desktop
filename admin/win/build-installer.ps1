@@ -137,6 +137,12 @@ if (-not (Test-Path "$BinDir\translations")) {
 }
 Copy-Item "$CraftRoot\translations\qtwebengine_locales" "$BinDir\translations\" -Recurse -Force -ErrorAction SilentlyContinue
 
+# Client translations (for Portuguese and other languages)
+Write-Host "  Copying client translations..."
+Copy-Item "$BuildDir\src\gui\client_*.qm" "$BinDir\" -Force -ErrorAction SilentlyContinue
+$translationCount = (Get-ChildItem "$BinDir\client_*.qm" -ErrorAction SilentlyContinue).Count
+Write-Host "    Copied $translationCount client translation files"
+
 Write-Host "Dependencies copied successfully" -ForegroundColor Green
 
 # Step 4: Test
