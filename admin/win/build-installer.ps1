@@ -138,10 +138,14 @@ if (-not (Test-Path "$BinDir\translations")) {
 Copy-Item "$CraftRoot\translations\qtwebengine_locales" "$BinDir\translations\" -Recurse -Force -ErrorAction SilentlyContinue
 
 # Client translations (for Portuguese and other languages)
-Write-Host "  Copying client translations..."
-Copy-Item "$BuildDir\src\gui\client_*.qm" "$BinDir\" -Force -ErrorAction SilentlyContinue
-$translationCount = (Get-ChildItem "$BinDir\client_*.qm" -ErrorAction SilentlyContinue).Count
-Write-Host "    Copied $translationCount client translation files"
+# On Windows, translations must be in <app_dir>/i18n/ folder
+Write-Host "  Copying client translations to i18n folder..."
+if (-not (Test-Path "$BinDir\i18n")) {
+    New-Item -ItemType Directory -Path "$BinDir\i18n" | Out-Null
+}
+Copy-Item "$BuildDir\src\gui\client_*.qm" "$BinDir\i18n\" -Force -ErrorAction SilentlyContinue
+$translationCount = (Get-ChildItem "$BinDir\i18n\client_*.qm" -ErrorAction SilentlyContinue).Count
+Write-Host "    Copied $translationCount client translation files to i18n/"
 
 Write-Host "Dependencies copied successfully" -ForegroundColor Green
 
