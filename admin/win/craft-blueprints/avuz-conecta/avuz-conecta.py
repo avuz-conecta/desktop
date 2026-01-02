@@ -10,7 +10,7 @@ class subinfo(info.infoclass):
 
     def setTargets(self):
         # Use local source directory
-        self.svnTargets["master"] = ""
+        self.svnTargets["master"] = "C:/Dev/desktop"
 
         self.description = "Avuz Conecta Desktop Client"
         self.displayName = "Avuz Conecta"
@@ -57,6 +57,8 @@ class Package(CMakePackageBase):
         self.defines["icon"] = os.path.join(self.sourceDir(), "admin/win/nsi/installer.ico")
         self.defines["icon_png"] = os.path.join(self.sourceDir(), "theme/colored/AvuzConecta-icon.png")
         self.defines["setupname"] = "AvuzConecta-4.0.3-setup.exe"
+        self.defines["license"] = os.path.join(self.sourceDir(), "COPYING")
+        self.defines["readme"] = os.path.join(self.sourceDir(), "README.md")
 
         self.applicationExecutable = "avuzconecta"
 
