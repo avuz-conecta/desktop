@@ -79,8 +79,8 @@ Type: filesandordirs; Name: "{userappdata}\AvuzConecta"; Tasks: cleandata
 Type: filesandordirs; Name: "{localappdata}\AvuzConecta"; Tasks: cleandata
 
 [INI]
-; Note: language key must be at root level (no section) as expected by the app
-Filename: "{userappdata}\Avuz\Avuz Conecta\avuzconecta.cfg"; Key: "language"; String: "pt_BR"
+; QSettings with IniFormat writes to [General] section by default
+Filename: "{userappdata}\Avuz\Avuz Conecta\avuzconecta.cfg"; Section: "General"; Key: "language"; String: "pt_BR"
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}"
