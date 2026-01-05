@@ -100,6 +100,10 @@ Write-Host "`n=== Step 2: Deploying Qt dependencies ===" -ForegroundColor Yellow
 # Step 3: Copy ALL required dependencies
 Write-Host "`n=== Step 3: Copying ALL dependencies ===" -ForegroundColor Yellow
 
+# qt.conf is critical for the app to find plugins and QML in the local directory
+Write-Host "  Copying qt.conf..."
+Copy-Item "$RepoRoot\admin\win\nsi\qt.conf" "$BinDir\" -Force
+
 # Function to recursively find and copy all DLL dependencies
 function Copy-Dependencies {
     param(
