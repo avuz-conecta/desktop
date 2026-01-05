@@ -97,30 +97,69 @@ if (-not $SkipBuild) {
 Write-Host "`n=== Step 2: Deploying Qt dependencies ===" -ForegroundColor Yellow
 & "$CraftRoot\bin\windeployqt.exe" --release "$BinDir\avuzconecta.exe"
 
-# Step 3: Copy additional dependencies
-Write-Host "`n=== Step 3: Copying additional dependencies ===" -ForegroundColor Yellow
+# Step 3: Copy ALL required dependencies
+Write-Host "`n=== Step 3: Copying ALL dependencies ===" -ForegroundColor Yellow
 
-# OpenSSL
-Write-Host "  Copying OpenSSL..."
-Copy-Item "$CraftRoot\bin\libcrypto-3-x64.dll" "$BinDir\" -Force
-Copy-Item "$CraftRoot\bin\libssl-3-x64.dll" "$BinDir\" -Force
+# Function to recursively find and copy all DLL dependencies
+function Copy-Dependencies {
+    param(
+        [string]$TargetDir,
+        [string]$SourceDir,
+        [System.Collections.Generic.HashSet[string]]$ProcessedDlls
+    )
 
-# KDE Frameworks
-Write-Host "  Copying KDE Frameworks..."
-Copy-Item "$CraftRoot\bin\KF6*.dll" "$BinDir\" -Force -ErrorAction SilentlyContinue
+    $newDlls = @()
+    Get-ChildItem "$TargetDir\*.dll" -ErrorAction SilentlyContinue | ForEach-Object {
+        $dllName = $_.Name
+        if (-not $ProcessedDlls.Contains($dllName.ToLower())) {
+            $ProcessedDlls.Add($dllName.ToLower()) | Out-Null
 
-# Qt Keychain
-Write-Host "  Copying Qt Keychain..."
-Copy-Item "$CraftRoot\bin\qt6keychain.dll" "$BinDir\" -Force -ErrorAction SilentlyContinue
+            # Get dependencies using dumpbin
+            $deps = & dumpbin /dependents $_.FullName 2>$null | Select-String "\.dll" | ForEach-Object { $_.ToString().Trim() }
+            foreach ($dep in $deps) {
+                $depLower = $dep.ToLower()
+                if (-not $ProcessedDlls.Contains($depLower)) {
+                    $sourcePath = "$SourceDir\$dep"
+                    if (Test-Path $sourcePath) {
+                        $destPath = "$TargetDir\$dep"
+                        if (-not (Test-Path $destPath)) {
+                            Copy-Item $sourcePath $destPath -Force
+                            $newDlls += $dep
+                        }
+                    }
+                }
+            }
+        }
+    }
 
-# Other libraries
-Write-Host "  Copying other libraries..."
-Copy-Item "$CraftRoot\bin\zlib*.dll" "$BinDir\" -Force -ErrorAction SilentlyContinue
-Copy-Item "$CraftRoot\bin\*sqlite*.dll" "$BinDir\" -Force -ErrorAction SilentlyContinue
-Copy-Item "$CraftRoot\bin\libp11*.dll" "$BinDir\" -Force -ErrorAction SilentlyContinue
-Copy-Item "$CraftRoot\bin\bz2*.dll" "$BinDir\" -Force -ErrorAction SilentlyContinue
-Copy-Item "$CraftRoot\bin\liblzma*.dll" "$BinDir\" -Force -ErrorAction SilentlyContinue
-Copy-Item "$CraftRoot\bin\zstd*.dll" "$BinDir\" -Force -ErrorAction SilentlyContinue
+    # Recursively process newly copied DLLs
+    if ($newDlls.Count -gt 0) {
+        Copy-Dependencies -TargetDir $TargetDir -SourceDir $SourceDir -ProcessedDlls $ProcessedDlls
+    }
+}
+
+# Copy all DLLs from CraftRoot\bin that we might need
+Write-Host "  Copying base dependencies..."
+$baseDlls = @(
+    "libcrypto-3-x64.dll", "libssl-3-x64.dll",
+    "KF6*.dll", "qt6keychain.dll",
+    "zlib*.dll", "*sqlite*.dll", "libp11*.dll",
+    "bz2*.dll", "liblzma*.dll", "zstd*.dll",
+    "libpng*.dll", "libjpeg*.dll", "jpeg*.dll",
+    "freetype*.dll", "harfbuzz*.dll", "pcre2*.dll",
+    "libintl*.dll", "iconv*.dll", "libxml2*.dll",
+    "libb2*.dll", "libmd4c*.dll", "double-conversion*.dll",
+    "libsharpyuv*.dll", "libwebp*.dll", "libbrotli*.dll"
+)
+foreach ($pattern in $baseDlls) {
+    Copy-Item "$CraftRoot\bin\$pattern" "$BinDir\" -Force -ErrorAction SilentlyContinue
+}
+
+# Now recursively find and copy all transitive dependencies
+Write-Host "  Analyzing and copying transitive dependencies..."
+$processed = [System.Collections.Generic.HashSet[string]]::new()
+Copy-Dependencies -TargetDir $BinDir -SourceDir "$CraftRoot\bin" -ProcessedDlls $processed
+Write-Host "    Processed $($processed.Count) DLLs"
 
 # WebEngine resources
 Write-Host "  Copying WebEngine resources..."
