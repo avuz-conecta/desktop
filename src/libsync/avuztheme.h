@@ -21,6 +21,7 @@ public:
     AvuzTheme();
 
     [[nodiscard]] QString wizardUrlHint() const override;
+    [[nodiscard]] QString enforcedLocale() const override { return QStringLiteral("pt_BR"); }
 };
 }
 #endif // AVUZ_THEME_H
