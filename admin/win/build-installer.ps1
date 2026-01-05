@@ -116,7 +116,7 @@ Copy-Item "$CraftRoot\bin\qt6keychain.dll" "$BinDir\" -Force -ErrorAction Silent
 # Other libraries
 Write-Host "  Copying other libraries..."
 Copy-Item "$CraftRoot\bin\zlib*.dll" "$BinDir\" -Force -ErrorAction SilentlyContinue
-Copy-Item "$CraftRoot\bin\sqlite3.dll" "$BinDir\" -Force -ErrorAction SilentlyContinue
+Copy-Item "$CraftRoot\bin\*sqlite*.dll" "$BinDir\" -Force -ErrorAction SilentlyContinue
 Copy-Item "$CraftRoot\bin\libp11*.dll" "$BinDir\" -Force -ErrorAction SilentlyContinue
 Copy-Item "$CraftRoot\bin\bz2*.dll" "$BinDir\" -Force -ErrorAction SilentlyContinue
 Copy-Item "$CraftRoot\bin\liblzma*.dll" "$BinDir\" -Force -ErrorAction SilentlyContinue
