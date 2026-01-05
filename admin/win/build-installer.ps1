@@ -177,6 +177,12 @@ if (-not (Test-Path "$BinDir\translations")) {
 }
 Copy-Item "$CraftRoot\translations\qtwebengine_locales" "$BinDir\translations\" -Recurse -Force -ErrorAction SilentlyContinue
 
+# Qt QML modules (required for tray window and other QML UI)
+Write-Host "  Copying Qt QML modules..."
+Copy-Item "$CraftRoot\qml\*" "$BinDir\qml\" -Recurse -Force -ErrorAction SilentlyContinue
+$qmlCount = (Get-ChildItem "$BinDir\qml" -Directory -ErrorAction SilentlyContinue).Count
+Write-Host "    Copied $qmlCount QML module directories"
+
 # Client translations (for Portuguese and other languages)
 # On Windows, translations must be in <app_dir>/i18n/ folder
 Write-Host "  Copying client translations to i18n folder..."
