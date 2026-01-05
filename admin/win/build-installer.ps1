@@ -95,7 +95,7 @@ if (-not $SkipBuild) {
 
 # Step 2: Deploy Qt dependencies
 Write-Host "`n=== Step 2: Deploying Qt dependencies ===" -ForegroundColor Yellow
-& "$CraftRoot\bin\windeployqt.exe" --release "$BinDir\avuzconecta.exe"
+& "$CraftRoot\bin\windeployqt.exe" --release --qmldir "$RepoRoot\src\gui" "$BinDir\avuzconecta.exe"
 
 # Step 3: Copy ALL required dependencies
 Write-Host "`n=== Step 3: Copying ALL dependencies ===" -ForegroundColor Yellow
@@ -183,6 +183,9 @@ Copy-Item "$CraftRoot\translations\qtwebengine_locales" "$BinDir\translations\" 
 
 # Qt QML modules (required for tray window and other QML UI)
 Write-Host "  Copying Qt QML modules..."
+if (-not (Test-Path "$BinDir\qml")) {
+    New-Item -ItemType Directory -Path "$BinDir\qml" | Out-Null
+}
 Copy-Item "$CraftRoot\qml\*" "$BinDir\qml\" -Recurse -Force -ErrorAction SilentlyContinue
 $qmlCount = (Get-ChildItem "$BinDir\qml" -Directory -ErrorAction SilentlyContinue).Count
 Write-Host "    Copied $qmlCount QML module directories"
