@@ -120,6 +120,7 @@ Copy-Item "$CraftRoot\bin\*sqlite*.dll" "$BinDir\" -Force -ErrorAction SilentlyC
 Copy-Item "$CraftRoot\bin\libp11*.dll" "$BinDir\" -Force -ErrorAction SilentlyContinue
 Copy-Item "$CraftRoot\bin\bz2*.dll" "$BinDir\" -Force -ErrorAction SilentlyContinue
 Copy-Item "$CraftRoot\bin\liblzma*.dll" "$BinDir\" -Force -ErrorAction SilentlyContinue
+Copy-Item "$CraftRoot\bin\zstd*.dll" "$BinDir\" -Force -ErrorAction SilentlyContinue
 
 # WebEngine resources
 Write-Host "  Copying WebEngine resources..."
