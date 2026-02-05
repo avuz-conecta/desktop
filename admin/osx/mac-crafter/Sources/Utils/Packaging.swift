@@ -52,14 +52,14 @@ fileprivate func notarisePackage(
 
 fileprivate func buildSparklePackage(packagePath: String, buildPath: String) async throws -> String {
     let sparkleTbzPath = "\(packagePath).tbz"
-    guard await shell("tar cf \(sparkleTbzPath) \(packagePath)") == 0 else {
+    guard await shell("tar cf \"\(sparkleTbzPath)\" \"\(packagePath)\"") == 0 else {
         throw PackagingError.packageSparkleBuildError("Could not create Sparkle package tbz!")
     }
     return sparkleTbzPath
 }
 
 fileprivate func signSparklePackage(sparkleTbzPath: String, buildPath: String, signKey: String) async throws {
-    guard await shell("\(buildPath)/bin/sign_update -s \(signKey) \(sparkleTbzPath)") == 0 else {
+    guard await shell("\"\(buildPath)/bin/sign_update\" -s \"\(signKey)\" \"\(sparkleTbzPath)\"") == 0 else {
         throw PackagingError.packageSparkleSignError("Could not sign Sparkle package tbz!")
     }
 }
@@ -131,7 +131,7 @@ func createDmgForAppBundle(
         .appendingPathExtension("dmg")
         .path
 
-    guard await shell("create-dmg --volname \(appName) --filesystem APFS --app-drop-link 513 37 --window-size 787 276 \"\(dmgFilePath)\" \"\(appBundlePath)\"") == 0 else {
+    guard await shell("create-dmg --volname \"\(appName)\" --filesystem APFS --app-drop-link 513 37 --window-size 787 276 \"\(dmgFilePath)\" \"\(appBundlePath)\"") == 0 else {
         throw PackagingError.packageCreateDmgFailed("Command failed.")
     }
 

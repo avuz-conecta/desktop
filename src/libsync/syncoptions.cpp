@@ -60,6 +60,10 @@ void SyncOptions::fillFromEnvironmentVariables()
     int maxParallel = qgetenv("OWNCLOUD_MAX_PARALLEL").toInt();
     if (maxParallel > 0)
         _parallelNetworkJobs = maxParallel;
+
+    int discoveryBatchSize = qgetenv("OWNCLOUD_DISCOVERY_BATCH_SIZE").toInt();
+    if (discoveryBatchSize > 0)
+        _discoveryBatchSize = discoveryBatchSize;
 }
 
 void SyncOptions::verifyChunkSizes()

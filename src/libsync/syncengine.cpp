@@ -473,6 +473,19 @@ void OCC::SyncEngine::slotItemDiscovered(const OCC::SyncFileItemPtr &item)
     checkErrorBlacklisting(*item);
     _needsUpdate = true;
 
+    // Batch sync: check if we've reached the discovery batch limit
+    const int batchSize = _syncOptions._discoveryBatchSize;
+    if (batchSize > 0 && _syncItems.size() >= batchSize) {
+        if (!_discoveryBatchLimitReached) {
+            _discoveryBatchLimitReached = true;
+            _anotherSyncNeeded = ImmediateFollowUp;
+            qCInfo(lcEngine) << "Discovery batch limit reached (" << batchSize
+                             << " items). Remaining items will be synced in follow-up sync.";
+        }
+        // Skip adding this item - it will be rediscovered in the next sync
+        return;
+    }
+
     // Insert sorted
     auto it = std::lower_bound( _syncItems.begin(), _syncItems.end(), item ); // the _syncItems is sorted
     _syncItems.insert( it, item );
@@ -568,6 +581,7 @@ void SyncEngine::startSync()
 
     _syncItems.clear();
     _needsUpdate = false;
+    _discoveryBatchLimitReached = false;
 
     if (!_journal->exists()) {
         qCInfo(lcEngine) << "New sync (no sync journal exists)";
@@ -807,6 +821,14 @@ void SyncEngine::slotDiscoveryFinished()
     }
 
     qCInfo(lcEngine) << "#### Discovery end #################################################### " << _stopWatch.addLapTime(QLatin1String("Discovery Finished")) << "ms";
+
+    // Log batch sync status
+    if (_discoveryBatchLimitReached) {
+        qCInfo(lcEngine) << "Batched sync: discovered" << _syncItems.size() << "items (batch limit:"
+                         << _syncOptions._discoveryBatchSize << "). Follow-up sync scheduled.";
+    } else {
+        qCInfo(lcEngine) << "Discovery complete: " << _syncItems.size() << "items to sync.";
+    }
 
     // Sanity check
     if (!_journal->open()) {
@@ -1052,6 +1074,20 @@ void SyncEngine::finishSync()
     Q_ASSERT(std::is_sorted(_syncItems.begin(), _syncItems.end()));
 
     qCInfo(lcEngine) << "#### Reconcile (aboutToPropagate) #################################################### " << _stopWatch.addLapTime(QStringLiteral("Reconcile (aboutToPropagate)")) << "ms";
+
+    // Track batch sync progress in database
+    if (_discoveryBatchLimitReached) {
+        _journal->keyValueStoreSet(QStringLiteral("batch_sync_items_this_run"), static_cast<qint64>(_syncItems.size()));
+        qint64 totalSynced = _journal->keyValueStoreGetInt(QStringLiteral("batch_sync_total_items"), 0);
+        totalSynced += _syncItems.size();
+        _journal->keyValueStoreSet(QStringLiteral("batch_sync_total_items"), totalSynced);
+        qCInfo(lcEngine) << "Batch sync progress: this batch:" << _syncItems.size()
+                         << "total synced so far:" << totalSynced;
+    } else {
+        // Not a batched sync or final batch - clear the tracking
+        _journal->keyValueStoreDelete(QStringLiteral("batch_sync_items_this_run"));
+        _journal->keyValueStoreDelete(QStringLiteral("batch_sync_total_items"));
+    }
 
     _localDiscoveryPaths.clear();
 

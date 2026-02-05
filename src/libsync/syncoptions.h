@@ -58,6 +58,13 @@ public:
     /** The maximum number of active jobs in parallel  */
     int _parallelNetworkJobs = 6;
 
+    /** Maximum number of items to discover per sync batch.
+     *  0 means unlimited.
+     *  When set, discovery will stop after this many items and schedule a follow-up sync.
+     *  Useful for very large folders (300k+ files) to prevent memory issues and timeouts.
+     */
+    int _discoveryBatchSize = 50000;
+
     static constexpr auto chunkV2MinChunkSize = 5LL * 1000LL * 1000LL; // 5 MB
     static constexpr auto chunkV2MaxChunkSize = 5LL * 1000LL * 1000LL * 1000LL; // 5 GB
 
