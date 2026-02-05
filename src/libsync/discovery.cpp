@@ -179,6 +179,12 @@ void ProcessDirectoryJob::process()
     // Iterate over entries and process them
     //
     for (auto &f : entries) {
+        // Stop processing if batch limit was reached
+        if (_discoveryData->_batchLimitReached) {
+            qCInfo(lcDisco) << "Batch limit reached, stopping directory processing";
+            break;
+        }
+
         auto &e = f.second;
 
         PathTuple path;
@@ -2183,6 +2189,11 @@ void ProcessDirectoryJob::subJobFinished()
 
 int ProcessDirectoryJob::processSubJobs(int nbJobs)
 {
+    // Stop processing if batch limit was reached
+    if (_discoveryData->_batchLimitReached) {
+        return 0;
+    }
+
     if (_queuedJobs.empty() && _runningJobs.empty() && _pendingAsyncJobs == 0) {
         _pendingAsyncJobs = -1; // We're finished, we don't want to emit finished again
         if (_dirItem) {

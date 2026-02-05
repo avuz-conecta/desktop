@@ -307,6 +307,12 @@ public:
     // output
     QByteArray _dataFingerprint;
     bool _anotherSyncNeeded = false;
+
+    /** Set to true to stop discovery early (used by batched sync) */
+    bool _batchLimitReached = false;
+
+    /** Call this to stop discovery early and emit finished signal */
+    void stopDiscoveryAndFinish();
     QHash<QString, long long> _filesNeedingScheduledSync;
     QVector<QString> _filesUnscheduleSync;
 

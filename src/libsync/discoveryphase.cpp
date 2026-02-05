@@ -314,10 +314,26 @@ bool DiscoveryPhase::isRenamed(const QString &p) const
 
 void DiscoveryPhase::scheduleMoreJobs()
 {
+    // Stop scheduling if batch limit was reached
+    if (_batchLimitReached) {
+        return;
+    }
+
     auto limit = qMax(1, _syncOptions._parallelNetworkJobs);
     if (_currentRootJob && _currentlyActiveJobs < limit) {
         _currentRootJob->processSubJobs(limit - _currentlyActiveJobs);
     }
+}
+
+void DiscoveryPhase::stopDiscoveryAndFinish()
+{
+    qCInfo(lcDiscovery) << "Stopping discovery early due to batch limit";
+    _batchLimitReached = true;
+    _anotherSyncNeeded = true;
+
+    // Emit finished with queued connection to avoid re-entrancy issues
+    // (we might be called from within slotItemDiscovered)
+    QMetaObject::invokeMethod(this, "finished", Qt::QueuedConnection);
 }
 
 void DiscoveryPhase::slotItemDiscovered(const OCC::SyncFileItemPtr &item)

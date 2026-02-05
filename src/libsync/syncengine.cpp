@@ -480,7 +480,11 @@ void OCC::SyncEngine::slotItemDiscovered(const OCC::SyncFileItemPtr &item)
             _discoveryBatchLimitReached = true;
             _anotherSyncNeeded = ImmediateFollowUp;
             qCInfo(lcEngine) << "Discovery batch limit reached (" << batchSize
-                             << " items). Remaining items will be synced in follow-up sync.";
+                             << " items). Stopping discovery and scheduling follow-up sync.";
+            // Stop the discovery phase immediately
+            if (_discoveryPhase) {
+                _discoveryPhase->stopDiscoveryAndFinish();
+            }
         }
         // Skip adding this item - it will be rediscovered in the next sync
         return;
