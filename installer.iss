@@ -2,7 +2,7 @@
 ; Build with: "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer.iss
 
 #define MyAppName "Avuz Conecta"
-#define MyAppVersion "4.0.3"
+#define MyAppVersion "4.0.9"
 #define MyAppPublisher "Avuz"
 #define MyAppURL "https://avuz.app"
 #define MyAppExeName "avuzconecta.exe"

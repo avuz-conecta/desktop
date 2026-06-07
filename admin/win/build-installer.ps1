@@ -227,7 +227,7 @@ if (-not $SkipPackage) {
     & $InnoSetup "$RepoRoot\installer.iss"
     if ($LASTEXITCODE -ne 0) { throw "Installer build failed" }
 
-    Write-Host "`nInstaller created: $RepoRoot\AvuzConecta-4.0.3-setup.exe" -ForegroundColor Green
+    Write-Host "`nInstaller created: $RepoRoot\AvuzConecta-4.0.9-setup.exe" -ForegroundColor Green
 }
 
 Write-Host "`n=== Build completed ===" -ForegroundColor Cyan

@@ -51,11 +51,11 @@ class Package(CMakePackageBase):
         self.defines["company"] = "Avuz"
         self.defines["productname"] = "Avuz Conecta"
         self.defines["display_name"] = "Avuz Conecta"
-        self.defines["version"] = "4.0.3"
+        self.defines["version"] = "4.0.9"
         self.defines["website"] = "https://avuz.app"
         self.defines["icon"] = os.path.join(self.sourceDir(), "admin/win/nsi/installer.ico")
         self.defines["icon_png"] = os.path.join(self.sourceDir(), "theme/colored/AvuzConecta-icon.png")
-        self.defines["setupname"] = "AvuzConecta-4.0.3-setup.exe"
+        self.defines["setupname"] = "AvuzConecta-4.0.9-setup.exe"
         self.defines["license"] = os.path.join(self.sourceDir(), "COPYING")
         self.defines["readme"] = os.path.join(self.sourceDir(), "README.md")
 
