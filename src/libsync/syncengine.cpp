@@ -490,9 +490,9 @@ void OCC::SyncEngine::slotItemDiscovered(const OCC::SyncFileItemPtr &item)
         return; // do not add this item; it will be re-discovered next sync
     }
 
-    // Insert sorted
-    auto it = std::lower_bound( _syncItems.begin(), _syncItems.end(), item ); // the _syncItems is sorted
-    _syncItems.insert( it, item );
+    // Append now; _syncItems is sorted once in finishSync(). Sorted-insert here
+    // is O(n^2) and freezes discovery of very large directories.
+    _syncItems.push_back(item);
 
     slotNewItem(item);
 
@@ -1078,7 +1078,17 @@ void SyncEngine::finishSync()
         _anotherSyncNeeded = ImmediateFollowUp;
     }
 
+    std::sort(_syncItems.begin(), _syncItems.end());
     Q_ASSERT(std::is_sorted(_syncItems.begin(), _syncItems.end()));
+
+    // Track cumulative progress across batched syncs so the follow-up scheduler
+    // can stop if a batch stops making progress (guards against an infinite loop).
+    if (_discoveryBatchLimitReached) {
+        const qint64 previousTotal = _journal->keyValueStoreGetInt(QStringLiteral("batch_sync_total_items"), 0);
+        _journal->keyValueStoreSet(QStringLiteral("batch_sync_total_items"), previousTotal + static_cast<qint64>(_syncItems.size()));
+    } else {
+        _journal->keyValueStoreDelete(QStringLiteral("batch_sync_total_items"));
+    }
 
     qCInfo(lcEngine) << "#### Reconcile (aboutToPropagate) #################################################### " << _stopWatch.addLapTime(QStringLiteral("Reconcile (aboutToPropagate)")) << "ms";
 
