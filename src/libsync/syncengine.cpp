@@ -473,23 +473,6 @@ void OCC::SyncEngine::slotItemDiscovered(const OCC::SyncFileItemPtr &item)
     checkErrorBlacklisting(*item);
     _needsUpdate = true;
 
-    // Batched discovery: once we have collected a full batch, stop discovery and
-    // schedule a follow-up sync. The skipped items are re-discovered next sync;
-    // directories interrupted here keep their stale etag so they get re-listed.
-    const int batchSize = _syncOptions._discoveryBatchSize;
-    if (batchSize > 0 && !item->isDirectory() && static_cast<int>(_syncItems.size()) >= batchSize) {
-        if (!_discoveryBatchLimitReached) {
-            _discoveryBatchLimitReached = true;
-            _anotherSyncNeeded = ImmediateFollowUp;
-            qCInfo(lcEngine) << "Discovery batch limit reached (" << batchSize
-                             << "items). Stopping discovery; follow-up scheduled.";
-            if (_discoveryPhase) {
-                _discoveryPhase->stopDiscoveryForBatch();
-            }
-        }
-        return; // do not add this item; it will be re-discovered next sync
-    }
-
     // Append now; _syncItems is sorted once in finishSync(). Sorted-insert here
     // is O(n^2) and freezes discovery of very large directories.
     _syncItems.push_back(item);
@@ -585,7 +568,6 @@ void SyncEngine::startSync()
 
     _syncItems.clear();
     _needsUpdate = false;
-    _discoveryBatchLimitReached = false;
 
     if (!_journal->exists()) {
         qCInfo(lcEngine) << "New sync (no sync journal exists)";
@@ -1080,15 +1062,6 @@ void SyncEngine::finishSync()
 
     std::sort(_syncItems.begin(), _syncItems.end());
     Q_ASSERT(std::is_sorted(_syncItems.begin(), _syncItems.end()));
-
-    // Track cumulative progress across batched syncs so the follow-up scheduler
-    // can stop if a batch stops making progress (guards against an infinite loop).
-    if (_discoveryBatchLimitReached) {
-        const qint64 previousTotal = _journal->keyValueStoreGetInt(QStringLiteral("batch_sync_total_items"), 0);
-        _journal->keyValueStoreSet(QStringLiteral("batch_sync_total_items"), previousTotal + static_cast<qint64>(_syncItems.size()));
-    } else {
-        _journal->keyValueStoreDelete(QStringLiteral("batch_sync_total_items"));
-    }
 
     qCInfo(lcEngine) << "#### Reconcile (aboutToPropagate) #################################################### " << _stopWatch.addLapTime(QStringLiteral("Reconcile (aboutToPropagate)")) << "ms";
 

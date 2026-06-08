@@ -80,9 +80,6 @@ public:
     /* Returns whether another sync is needed to complete the sync */
     [[nodiscard]] AnotherSyncNeeded isAnotherSyncNeeded() const { return _anotherSyncNeeded; }
 
-    /** True if the last discovery stopped early because the batch limit was hit. */
-    [[nodiscard]] bool wasDiscoveryBatchLimited() const { return _discoveryBatchLimitReached; }
-
     [[nodiscard]] bool wasFileTouched(const QString &fn) const;
 
     [[nodiscard]] AccountPtr account() const { return _account; };
@@ -387,9 +384,6 @@ private:
 
     AnotherSyncNeeded _anotherSyncNeeded = NoFollowUpSync;
     bool _restartedSyncAfterDiscovery = false;
-
-    /** Set when discovery stopped early due to the batch limit (SyncOptions::_discoveryBatchSize). */
-    bool _discoveryBatchLimitReached = false;
 
     /** Stores the time since a job touched a file. */
     QMultiMap<QElapsedTimer, QString> _touchedFiles;

@@ -296,23 +296,6 @@ void DiscoveryPhase::startJob(ProcessDirectoryJob *job)
     job->start();
 }
 
-void DiscoveryPhase::stopDiscoveryForBatch()
-{
-    if (_batchLimitReached) {
-        return; // idempotent: only act once per discovery
-    }
-    _batchLimitReached = true;
-    _anotherSyncNeeded = true;
-
-    // Don't tear down the job tree here: this is called from within itemDiscovered
-    // handling, deep inside ProcessDirectoryJob::processSubJobs. The guards in
-    // process()/processSubJobs()/scheduleMoreJobs() stop all further work, and the
-    // running ProcessDirectoryJob tree (with any in-flight PROPFINDs) is freed when
-    // the next sync replaces DiscoveryPhase. Emit finished asynchronously so the
-    // partial result is committed through the normal slotDiscoveryFinished path.
-    QMetaObject::invokeMethod(this, [this]() { emit finished(); }, Qt::QueuedConnection);
-}
-
 void DiscoveryPhase::setSelectiveSyncBlackList(const QStringList &list)
 {
     _selectiveSyncBlackList = list;
@@ -332,9 +315,6 @@ bool DiscoveryPhase::isRenamed(const QString &p) const
 
 void DiscoveryPhase::scheduleMoreJobs()
 {
-    if (_batchLimitReached) {
-        return;
-    }
     auto limit = qMax(1, _syncOptions._parallelNetworkJobs);
     if (_currentRootJob && _currentlyActiveJobs < limit) {
         _currentRootJob->processSubJobs(limit - _currentlyActiveJobs);

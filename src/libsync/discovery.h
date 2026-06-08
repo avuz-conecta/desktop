@@ -139,6 +139,16 @@ private:
      */
     void process();
 
+    /** Processes the merged entries built by process(), in chunks that yield to
+     *  the event loop so the GUI stays responsive on very large flat directories.
+     *  Resumes itself via QTimer until all entries are processed. */
+    void processEntries();
+
+    /** Merged local/db/server entries for this directory, built by process() and
+     *  consumed in chunks by processEntries(). */
+    std::map<QString, Entries> _entries;
+    std::map<QString, Entries>::iterator _entriesIterator;
+
     // return true if the file is excluded.
     // path is the full relative path of the file. localName is the base name of the local entry.
     bool handleExcluded(const QString &path, const Entries &entries, const std::map<QString, Entries> &allEntries, bool isHidden, bool isBlacklisted);

@@ -1332,24 +1332,8 @@ void Folder::slotSyncFinished(bool success)
         _consecutiveFollowUpSyncs = 0;
     }
 
-    // Maybe force a follow-up sync to take place.
-    // Normal follow-ups are limited to a couple of times. Batched syncs (large
-    // folders split across discovery passes) are allowed unlimited follow-ups,
-    // but ONLY while they keep making progress, so a stalled batch can't loop
-    // forever.
-    bool allowFollowUp = _consecutiveFollowUpSyncs <= 3;
-    if (anotherSyncNeeded == ImmediateFollowUp && _engine->wasDiscoveryBatchLimited()) {
-        const qint64 total = _journal.keyValueStoreGetInt(QStringLiteral("batch_sync_total_items"), 0);
-        allowFollowUp = total > _lastBatchSyncTotal;
-        _lastBatchSyncTotal = total;
-        if (!allowFollowUp) {
-            qCWarning(lcFolder) << "Batched sync made no progress; stopping follow-ups for" << path();
-        }
-    } else if (anotherSyncNeeded != ImmediateFollowUp) {
-        _lastBatchSyncTotal = 0;
-    }
-
-    if (anotherSyncNeeded == ImmediateFollowUp && allowFollowUp) {
+    // Maybe force a follow-up sync to take place, but only a couple of times.
+    if (anotherSyncNeeded == ImmediateFollowUp && _consecutiveFollowUpSyncs <= 3) {
         // Sometimes another sync is requested because a local file is still
         // changing, so wait at least a small amount of time before syncing
         // the folder again.

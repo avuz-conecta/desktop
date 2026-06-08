@@ -525,10 +525,6 @@ private:
     /// Reset when no follow-up is requested.
     int _consecutiveFollowUpSyncs = 0;
 
-    /// Cumulative batched-sync item total seen at the last follow-up decision.
-    /// Used to allow unlimited batched follow-ups only while progress is made.
-    qint64 _lastBatchSyncTotal = 0;
-
     mutable SyncJournalDb _journal;
 
     QScopedPointer<SyncRunFileLog> _fileLog;

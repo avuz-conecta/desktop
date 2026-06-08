@@ -301,19 +301,12 @@ public:
 
     void startJob(ProcessDirectoryJob *);
 
-    /** Stop discovery early but cleanly (used by batched discovery): tear down the
-     *  running job tree and emit finished() so the partial result is committed. */
-    void stopDiscoveryForBatch();
-
     void setSelectiveSyncBlackList(const QStringList &list);
     void setSelectiveSyncWhiteList(const QStringList &list);
 
     // output
     QByteArray _dataFingerprint;
     bool _anotherSyncNeeded = false;
-
-    /** Set when discovery was stopped early because the batch limit was reached. */
-    bool _batchLimitReached = false;
     QHash<QString, long long> _filesNeedingScheduledSync;
     QVector<QString> _filesUnscheduleSync;
 
