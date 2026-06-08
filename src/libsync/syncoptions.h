@@ -58,6 +58,14 @@ public:
     /** The maximum number of active jobs in parallel  */
     int _parallelNetworkJobs = 6;
 
+    /** Maximum number of items to collect in one discovery pass.
+     *  0 means unlimited (feature disabled).
+     *  When >0, discovery stops after this many items and a follow-up sync is
+     *  scheduled to collect the rest. Prevents UI freeze / memory blowup on
+     *  folders containing a single very large directory (100k+ files).
+     */
+    int _discoveryBatchSize = 50000;
+
     static constexpr auto chunkV2MinChunkSize = 5LL * 1000LL * 1000LL; // 5 MB
     static constexpr auto chunkV2MaxChunkSize = 5LL * 1000LL * 1000LL * 1000LL; // 5 GB
 
