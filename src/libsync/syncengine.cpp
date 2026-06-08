@@ -473,6 +473,23 @@ void OCC::SyncEngine::slotItemDiscovered(const OCC::SyncFileItemPtr &item)
     checkErrorBlacklisting(*item);
     _needsUpdate = true;
 
+    // Batched discovery: once we have collected a full batch, stop discovery and
+    // schedule a follow-up sync. The skipped items are re-discovered next sync;
+    // directories interrupted here keep their stale etag so they get re-listed.
+    const int batchSize = _syncOptions._discoveryBatchSize;
+    if (batchSize > 0 && !item->isDirectory() && static_cast<int>(_syncItems.size()) >= batchSize) {
+        if (!_discoveryBatchLimitReached) {
+            _discoveryBatchLimitReached = true;
+            _anotherSyncNeeded = ImmediateFollowUp;
+            qCInfo(lcEngine) << "Discovery batch limit reached (" << batchSize
+                             << "items). Stopping discovery; follow-up scheduled.";
+            if (_discoveryPhase) {
+                _discoveryPhase->stopDiscoveryForBatch();
+            }
+        }
+        return; // do not add this item; it will be re-discovered next sync
+    }
+
     // Insert sorted
     auto it = std::lower_bound( _syncItems.begin(), _syncItems.end(), item ); // the _syncItems is sorted
     _syncItems.insert( it, item );
@@ -568,6 +585,7 @@ void SyncEngine::startSync()
 
     _syncItems.clear();
     _needsUpdate = false;
+    _discoveryBatchLimitReached = false;
 
     if (!_journal->exists()) {
         qCInfo(lcEngine) << "New sync (no sync journal exists)";

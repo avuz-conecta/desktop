@@ -179,6 +179,22 @@ void ProcessDirectoryJob::process()
     // Iterate over entries and process them
     //
     for (auto &f : entries) {
+        if (_discoveryData->_batchLimitReached) {
+            // Batched discovery: this directory (and its not-yet-finalized ancestors)
+            // were interrupted by the batch limit. Emit each ancestor's item now with
+            // an invalid etag so the whole chain is created/recorded this sync but
+            // re-listed next sync to discover the remaining children. Without this the
+            // interrupted directories never finalize, so their children can never be
+            // created and the sync makes no progress.
+            for (auto *job = this; job; job = qobject_cast<ProcessDirectoryJob *>(job->parent())) {
+                if (job->_dirItem && job->_dirItem->isDirectory()) {
+                    job->_dirItem->_etag = QByteArrayLiteral("_invalid_");
+                    emit _discoveryData->itemDiscovered(job->_dirItem);
+                    job->_dirItem.reset();
+                }
+            }
+            break;
+        }
         auto &e = f.second;
 
         PathTuple path;
@@ -2191,9 +2207,22 @@ void ProcessDirectoryJob::subJobFinished()
 
 int ProcessDirectoryJob::processSubJobs(int nbJobs)
 {
+    if (_discoveryData->_batchLimitReached) {
+        return 0; // batched discovery: stop scheduling/finalizing once the limit is hit
+    }
+
     if (_queuedJobs.empty() && _runningJobs.empty() && _pendingAsyncJobs == 0) {
         _pendingAsyncJobs = -1; // We're finished, we don't want to emit finished again
         if (_dirItem) {
+            if (_discoveryData->_batchLimitReached
+                && _dirItem->_instruction == CSYNC_INSTRUCTION_UPDATE_METADATA) {
+                // This directory was only partially discovered before the batch
+                // limit stopped us. Do NOT commit a fresh etag for it, or the next
+                // sync would skip it (ParentNotChanged) and never discover the
+                // remaining children. Keeping the instruction at NONE leaves the
+                // DB etag stale so the directory is re-listed next sync.
+                _dirItem->_instruction = CSYNC_INSTRUCTION_NONE;
+            }
             if (_childModified && _dirItem->_instruction == CSYNC_INSTRUCTION_TYPE_CHANGE && !_dirItem->isDirectory()) {
                 // Replacing a directory by a file is a conflict, if the directory had modified children
                 _dirItem->_instruction = CSYNC_INSTRUCTION_CONFLICT;

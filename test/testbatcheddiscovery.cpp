@@ -92,6 +92,29 @@ private slots:
         QVERIFY2(afterSecond > afterFirst, "follow-up made no progress (would loop forever)");
     }
 
+    // The real-world shape: a large dir nested under another dir
+    // (e.g. train2017/train2017/*.jpg). Ancestors must be created too.
+    void convergesWithNestedDir()
+    {
+        FakeFolder fake{ FileInfo{} };
+        fake.remoteModifier().mkdir("outer");
+        fake.remoteModifier().mkdir("outer/inner");
+        for (int i = 0; i < 25; ++i) {
+            fake.remoteModifier().insert(
+                QStringLiteral("outer/inner/file%1.bin").arg(i, 6, 10, QLatin1Char('0')), 10);
+        }
+        setBatchSize(fake, 10);
+
+        int runs = 0;
+        do {
+            ++runs;
+            fake.syncOnce();
+        } while (fake.syncEngine().isAnotherSyncNeeded() != NoFollowUpSync && runs < 60);
+
+        QVERIFY2(runs < 60, "nested sync did not converge");
+        QCOMPARE(fake.currentLocalState(), fake.currentRemoteState());
+    }
+
     // Disabled (0) behaves like upstream: one pass, no follow-up.
     void disabledByZeroDoesOneShot()
     {
