@@ -31,6 +31,11 @@ public slots:
     void start();
 
 private slots:
+    /** Process the next chunk of _filesToDownload, then yield to the event loop
+     *  and reschedule itself. Keeps the GUI responsive when creating 100k+
+     *  Windows VFS placeholders, which all run on the main thread. */
+    void processChunk();
+
     void finalizeOneFile(const OCC::SyncFileItemPtr &file);
 
     void done(const OCC::SyncFileItem::Status status);
@@ -41,6 +46,7 @@ private:
     bool updateMetadata(const SyncFileItemPtr &item);
 
     QList<SyncFileItemPtr> _filesToDownload;
+    int _nextFileToProcess = 0;
 
     PropagateDownloadEncrypted *_downloadEncryptedHelper = nullptr;
 

@@ -15,6 +15,7 @@
 #include "propagatedownloadencrypted.h"
 
 #include <QDir>
+#include <QTimer>
 
 namespace OCC {
 
@@ -103,16 +104,15 @@ void BulkPropagatorDownloadJob::addDownloadItem(const SyncFileItemPtr &item)
 
 bool BulkPropagatorDownloadJob::scheduleSelfOrChild()
 {
+    if (_state == Running || _state == Finished) {
+        return false; // already processing; chunks run asynchronously
+    }
     if (_filesToDownload.empty()) {
         return false;
     }
 
     _state = Running;
-
     start();
-
-    _state = Finished;
-
     return false;
 }
 
@@ -133,7 +133,34 @@ void BulkPropagatorDownloadJob::start()
         return;
     }
 
-    for (const auto &fileToDownload : std::as_const(_filesToDownload)) {
+    const auto &vfs = propagator()->syncOptions()._vfs;
+    Q_ASSERT(vfs && vfs->mode() == Vfs::WindowsCfApi);
+
+    _nextFileToProcess = 0;
+    processChunk();
+}
+
+void BulkPropagatorDownloadJob::processChunk()
+{
+    if (propagator()->_abortRequested) {
+        abortWithError({}, SyncFileItem::NormalError, {});
+        return;
+    }
+
+    const auto &vfs = propagator()->syncOptions()._vfs;
+    Q_ASSERT(vfs && vfs->mode() == Vfs::WindowsCfApi);
+
+    // Process a bounded chunk and yield to the event loop between chunks. Creating
+    // every placeholder + metadata for 100k+ files in one synchronous pass froze
+    // the GUI thread; chunking lets the UI repaint while the bulk job runs.
+    constexpr auto chunkSize = 1000;
+    const auto total = _filesToDownload.size();
+    const auto end = qMin(_nextFileToProcess + chunkSize, total);
+
+    QList<SyncFileItemPtr> chunk;
+    chunk.reserve(end - _nextFileToProcess);
+    for (auto i = _nextFileToProcess; i < end; ++i) {
+        const auto &fileToDownload = _filesToDownload.at(i);
         Q_ASSERT(fileToDownload->_type == ItemTypeVirtualFile);
 
         if (propagator()->localFileNameClash(fileToDownload->_file)) {
@@ -143,16 +170,13 @@ void BulkPropagatorDownloadJob::start()
             abortWithError(fileToDownload, SyncFileItem::FileNameClash, tr("File %1 can not be downloaded because of a local file name clash!").arg(QDir::toNativeSeparators(fileToDownload->_file)));
             return;
         }
+        chunk.push_back(fileToDownload);
     }
 
-    const auto &vfs = propagator()->syncOptions()._vfs;
-    Q_ASSERT(vfs && vfs->mode() == Vfs::WindowsCfApi);
-
-    const auto r = vfs->createPlaceholders(_filesToDownload);
-
+    const auto r = vfs->createPlaceholders(chunk);
     if (!r) {
         qCCritical(lcBulkPropagatorDownloadJob) << "Could not create placholders:" << r.error();
-        for (const auto &fileToDownload : std::as_const(_filesToDownload)) {
+        for (const auto &fileToDownload : std::as_const(chunk)) {
             fileToDownload->_status = SyncFileItem::NormalError;
             finalizeOneFile(fileToDownload);
         }
@@ -160,9 +184,9 @@ void BulkPropagatorDownloadJob::start()
         return;
     }
 
-    for (const auto &fileToDownload : std::as_const(_filesToDownload)) {
+    for (const auto &fileToDownload : std::as_const(chunk)) {
         if (!updateMetadata(fileToDownload)) {
-            abortWithError(fileToDownload, SyncFileItem::NormalError, tr("Unable to update metadata of new file %1.", "error with update metadata of new Win VFS file").arg(fileToDownload->_file));
+            // updateMetadata() already calls abortWithError() on failure.
             return;
         }
 
@@ -174,9 +198,13 @@ void BulkPropagatorDownloadJob::start()
         finalizeOneFile(fileToDownload);
     }
 
-    _filesToDownload.clear();
-
-    done(SyncFileItem::Success);
+    _nextFileToProcess = end;
+    if (_nextFileToProcess < total) {
+        QTimer::singleShot(0, this, &BulkPropagatorDownloadJob::processChunk);
+    } else {
+        _filesToDownload.clear();
+        done(SyncFileItem::Success);
+    }
 }
 
 bool BulkPropagatorDownloadJob::updateMetadata(const SyncFileItemPtr &item)
@@ -192,7 +220,8 @@ bool BulkPropagatorDownloadJob::updateMetadata(const SyncFileItemPtr &item)
         return false;
     }
 
-    propagator()->_journal->commit("download file start2");
+    // Throttle: an fsync commit per file freezes the UI on 100k+ file syncs.
+    propagator()->_journal->commitIfTimeoutReached("download file start2");
 
     // handle the special recall file
     if (!item->_remotePerm.hasPermission(RemotePermissions::IsShared)
@@ -219,6 +248,7 @@ bool BulkPropagatorDownloadJob::updateMetadata(const SyncFileItemPtr &item)
 
 void BulkPropagatorDownloadJob::done(const SyncFileItem::Status status)
 {
+    _state = Finished;
     emit finished(status);
 }
 
