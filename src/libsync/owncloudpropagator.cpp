@@ -752,7 +752,7 @@ void OwncloudPropagator::processE2eeMetadataMigration(const SyncFileItemPtr &ite
         SyncFileItemPtr topLevelitem = item;
         if (foundDirectory.second) {
             topLevelitem = foundDirectory.second->_item;
-            if (!foundDirectory.second->_subJobs._jobsToDo.isEmpty()) {
+            if (!foundDirectory.second->_subJobs._jobsToDo.empty()) {
                 for (const auto jobToDo : std::as_const(foundDirectory.second->_subJobs._jobsToDo)) {
                     if (const auto foundExistingUpdateMigratedE2eeMetadataJob = qobject_cast<UpdateMigratedE2eeMetadataJob *>(jobToDo)) {
                         existingUpdateJob = foundExistingUpdateMigratedE2eeMetadataJob;
@@ -891,7 +891,7 @@ void OwncloudPropagator::scheduleNextJob()
 {
     if (_jobScheduled) return; // don't schedule more than 1
     _jobScheduled = true;
-    QTimer::singleShot(3, this, &OwncloudPropagator::scheduleNextJobImpl);
+    QTimer::singleShot(0, this, &OwncloudPropagator::scheduleNextJobImpl);
 }
 
 void OwncloudPropagator::scheduleNextJobImpl()
@@ -1239,7 +1239,7 @@ void PropagatorCompositeJob::slotSubJobAbortFinished()
 void PropagatorCompositeJob::appendJob(PropagatorJob *job)
 {
     job->setAssociatedComposite(this);
-    _jobsToDo.append(job);
+    _jobsToDo.push_back(job);
 }
 
 bool PropagatorCompositeJob::scheduleSelfOrChild()
@@ -1271,9 +1271,9 @@ bool PropagatorCompositeJob::scheduleSelfOrChild()
 
     // Now it's our turn, check if we have something left to do.
     // First, convert a task to a job if necessary
-    while (_jobsToDo.isEmpty() && !_tasksToDo.isEmpty()) {
-        SyncFileItemPtr nextTask = _tasksToDo.first();
-        _tasksToDo.remove(0);
+    while (_jobsToDo.empty() && !_tasksToDo.empty()) {
+        SyncFileItemPtr nextTask = _tasksToDo.front();
+        _tasksToDo.pop_front();
         PropagatorJob *job = propagator()->createJob(nextTask);
         if (!job) {
             if (!propagator()->isDelayedUploadItem(nextTask)) {
@@ -1285,16 +1285,16 @@ bool PropagatorCompositeJob::scheduleSelfOrChild()
         break;
     }
     // Then run the next job
-    if (!_jobsToDo.isEmpty()) {
-        PropagatorJob *nextJob = _jobsToDo.first();
-        _jobsToDo.remove(0);
+    if (!_jobsToDo.empty()) {
+        PropagatorJob *nextJob = _jobsToDo.front();
+        _jobsToDo.pop_front();
         _runningJobs.append(nextJob);
         return possiblyRunNextJob(nextJob);
     }
 
     // If neither us or our children had stuff left to do we could hang. Make sure
     // we mark this job as finished so that the propagator can schedule a new one.
-    if (_jobsToDo.isEmpty() && _tasksToDo.isEmpty() && _runningJobs.isEmpty()) {
+    if (_jobsToDo.empty() && _tasksToDo.empty() && _runningJobs.isEmpty()) {
         // Our parent jobs are already iterating over their running jobs, post to the event loop
         // to avoid removing ourself from that list while they iterate.
         QMetaObject::invokeMethod(this, "finalize", Qt::QueuedConnection);
@@ -1338,7 +1338,7 @@ void PropagatorCompositeJob::slotSubJobFinished(SyncFileItem::Status status)
         _hasError = status;
     }
 
-    if (_jobsToDo.isEmpty() && _tasksToDo.isEmpty() && _runningJobs.isEmpty()) {
+    if (_jobsToDo.empty() && _tasksToDo.empty() && _runningJobs.isEmpty()) {
         finalize();
     } else {
         propagator()->scheduleNextJob();

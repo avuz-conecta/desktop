@@ -3202,6 +3202,16 @@ void SyncJournalDb::commitIfNeededAndStartNewTransaction(const QString &context)
     }
 }
 
+void SyncJournalDb::commitIfTimeoutReached(const QString &context, int intervalMs)
+{
+    QMutexLocker lock(&_mutex);
+    if (_throttledCommitTimer.isValid() && _throttledCommitTimer.elapsed() < intervalMs) {
+        return; // keep accumulating in the current transaction
+    }
+    commitInternal(context, true);
+    _throttledCommitTimer.start();
+}
+
 bool SyncJournalDb::open()
 {
     QMutexLocker lock(&_mutex);

@@ -11,6 +11,7 @@
 #include <QDateTime>
 #include <QHash>
 #include <QMutex>
+#include <QElapsedTimer>
 #include <QVariant>
 #include <functional>
 
@@ -213,6 +214,14 @@ public:
      */
     void commit(const QString &context, bool startTrans = true);
     void commitIfNeededAndStartNewTransaction(const QString &context);
+
+    /** Commit only if at least `intervalMs` have elapsed since the last throttled
+     *  commit. SQLite commits do an fsync and are very slow; committing once per
+     *  item when syncing 100k+ files freezes the UI for minutes. Records stay in
+     *  the open transaction and are flushed by this or the final sync commit;
+     *  on a crash the uncommitted ones are simply re-synced.
+     */
+    void commitIfTimeoutReached(const QString &context, int intervalMs = 1000);
 
     /** Open the db if it isn't already.
      *
@@ -427,6 +436,7 @@ private:
     QRecursiveMutex _mutex; // Public functions are protected with the mutex.
     QMap<QByteArray, int> _checksymTypeCache;
     int _transaction = 0;
+    QElapsedTimer _throttledCommitTimer; // for commitIfTimeoutReached()
     bool _metadataTableIsEmpty = false;
 
     /* Storing etags to these folders, or their parent folders, is filtered out.

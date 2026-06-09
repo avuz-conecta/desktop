@@ -233,8 +233,8 @@ class PropagatorCompositeJob : public PropagatorJob
 {
     Q_OBJECT
 public:
-    QVector<PropagatorJob *> _jobsToDo;
-    SyncFileItemVector _tasksToDo;
+    std::deque<PropagatorJob *> _jobsToDo;
+    std::deque<SyncFileItemPtr> _tasksToDo;
     QVector<PropagatorJob *> _runningJobs;
     SyncFileItem::Status _hasError = SyncFileItem::NoStatus; // NoStatus,  or NormalError / SoftError if there was an error
     quint64 _abortsCount = 0;
@@ -254,7 +254,7 @@ public:
     void appendJob(PropagatorJob *job);
     void appendTask(const SyncFileItemPtr &item)
     {
-        _tasksToDo.append(item);
+        _tasksToDo.push_back(item);
     }
 
     bool scheduleSelfOrChild() override;

@@ -1412,7 +1412,9 @@ void PropagateDownloadFile::updateMetadata(bool isConflict)
         propagator()->_journal->setDownloadInfo(_item->_encryptedFileName, SyncJournalDb::DownloadInfo());
     }
 
-    propagator()->_journal->commit("download file start2");
+    // Throttle the commit: an fsync per downloaded file freezes the UI for
+    // minutes when syncing 100k+ files. The final sync commit flushes the rest.
+    propagator()->_journal->commitIfTimeoutReached("download file start2");
 
     done(isConflict ? SyncFileItem::Conflict : SyncFileItem::Success, {}, ErrorCategory::NoError);
 
