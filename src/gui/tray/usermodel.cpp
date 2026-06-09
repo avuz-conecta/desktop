@@ -902,7 +902,16 @@ void User::slotItemCompleted(const QString &folder, const SyncFileItemPtr &item)
         return;
     }
 
-    qCWarning(lcActivity) << "Item " << item->_file << " retrieved resulted in " << item->_errorString;
+    // During a very large sync the activity list only ever shows the most recent
+    // _maxActivities entries. Building an Activity for every completed item - each
+    // doing a per-item local-file lookup - freezes the GUI thread on 100k+ file
+    // syncs. Skip successful items once the list is full; errors still go in.
+    const bool isError = item->_status != SyncFileItem::Success && item->_status != SyncFileItem::NoStatus;
+    if (!isError && _activityModel->isSyncFileItemListFull()) {
+        return;
+    }
+
+    qCDebug(lcActivity) << "Item " << item->_file << " retrieved resulted in " << item->_errorString;
     processCompletedSyncItem(folderInstance, item);
 }
 

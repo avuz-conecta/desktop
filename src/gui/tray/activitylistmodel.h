@@ -124,6 +124,11 @@ public slots:
     void addNotificationToActivityList(const OCC::Activity &activity);
     void addErrorToActivityList(const OCC::Activity &activity, const OCC::ActivityListModel::ErrorType type);
     void addSyncFileItemToActivityList(const OCC::Activity &activity);
+
+    /** True once the list already holds the maximum number of activities it will
+     *  display. Used to skip expensive per-item processing during huge syncs. */
+    [[nodiscard]] bool isSyncFileItemListFull() const { return _presentedActivities.count() >= _maxActivities; }
+
     void removeActivityFromActivityList(int row);
     void removeActivityFromActivityList(const OCC::Activity &activity);
 
