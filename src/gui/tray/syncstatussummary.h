@@ -27,6 +27,7 @@ class SyncStatusSummary : public QObject
     Q_PROPERTY(QString syncStatusString READ syncStatusString NOTIFY syncStatusStringChanged)
     Q_PROPERTY(QString syncStatusDetailString READ syncStatusDetailString NOTIFY syncStatusDetailStringChanged)
     Q_PROPERTY(qint64 totalFiles READ totalFiles NOTIFY totalFilesChanged)
+    Q_PROPERTY(bool largeSyncInProgress READ largeSyncInProgress NOTIFY largeSyncInProgressChanged)
 
 public:
     explicit SyncStatusSummary(QObject *parent = nullptr);
@@ -37,6 +38,11 @@ public:
     [[nodiscard]] QString syncStatusString() const;
     [[nodiscard]] QString syncStatusDetailString() const;
     [[nodiscard]] qint64 totalFiles() const;
+    [[nodiscard]] bool largeSyncInProgress() const;
+
+    // Test-only setters (the production setters are private and driven by sync signals).
+    void setSyncingForTesting(bool value) { setSyncing(value); }
+    void setTotalFilesForTesting(qint64 value) { setTotalFiles(value); }
 
 signals:
     void syncProgressChanged();
@@ -45,6 +51,7 @@ signals:
     void syncStatusStringChanged();
     void syncStatusDetailStringChanged();
     void totalFilesChanged();
+    void largeSyncInProgressChanged();
 
 public slots:
     void load();
@@ -79,6 +86,7 @@ private:
     void setSyncIcon(const QUrl &value);
     void setAccountState(AccountStatePtr accountState);
     void setTotalFiles(const qint64 value);
+    void updateLargeSyncInProgress();
 
     AccountStatePtr _accountState;
     std::set<QString> _foldersWithErrors;
@@ -90,6 +98,8 @@ private:
     double _progress = 1.0;
     bool _isSyncing = false;
     qint64 _totalFiles = 0;
+    int _largeSyncThreshold = 20000;
+    bool _largeSyncInProgress = false;
     QString _syncStatusString = tr("All synced!");
     QString _syncStatusDetailString;
 };

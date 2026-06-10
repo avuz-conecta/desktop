@@ -45,6 +45,11 @@ Q_LOGGING_CATEGORY(lcSyncStatusModel, "nextcloud.gui.syncstatusmodel", QtInfoMsg
 SyncStatusSummary::SyncStatusSummary(QObject *parent)
     : QObject(parent)
 {
+    const auto thresholdOverride = qEnvironmentVariableIntValue("OWNCLOUD_LARGE_SYNC_NOTICE_THRESHOLD");
+    if (thresholdOverride > 0) {
+        _largeSyncThreshold = thresholdOverride;
+    }
+
     const auto folderMan = FolderMan::instance();
     connect(folderMan, &FolderMan::folderListChanged, this, &SyncStatusSummary::onFolderListChanged);
     connect(folderMan, &FolderMan::folderSyncStateChange, this, &SyncStatusSummary::onFolderSyncStateChanged);
@@ -316,6 +321,7 @@ void SyncStatusSummary::setSyncing(bool value)
 
     _isSyncing = value;
     emit syncingChanged();
+    updateLargeSyncInProgress();
 }
 
 void SyncStatusSummary::setTotalFiles(const qint64 value)
@@ -323,6 +329,21 @@ void SyncStatusSummary::setTotalFiles(const qint64 value)
     if (value != _totalFiles) {
         _totalFiles = value;
         emit totalFilesChanged();
+        updateLargeSyncInProgress();
+    }
+}
+
+bool SyncStatusSummary::largeSyncInProgress() const
+{
+    return _largeSyncInProgress;
+}
+
+void SyncStatusSummary::updateLargeSyncInProgress()
+{
+    const auto newValue = _isSyncing && _totalFiles > _largeSyncThreshold;
+    if (newValue != _largeSyncInProgress) {
+        _largeSyncInProgress = newValue;
+        emit largeSyncInProgressChanged();
     }
 }
 
