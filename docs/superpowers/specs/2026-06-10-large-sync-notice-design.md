@@ -57,7 +57,7 @@ This model already backs the tray sync display and tracks `_totalFiles`
   wrapping `Label`, with `visible: syncStatus.largeSyncInProgress`
   (`syncStatus` is the existing model alias in this file).
 - Text via `qsTr(...)`:
-  `"Setting up a large folder — this initial sync may take a while and the app may be slower than usual."`
+  `"Syncing thousands of files — the app may be slow during the sync."`
 - Style: muted/secondary text consistent with the existing tray styling
   (`Style` constants already used in this file). No new colors invented.
 
@@ -66,7 +66,7 @@ This model already backs the tray sync display and tracks `_totalFiles`
 - Add a `<message>` under the `SyncStatus` context with:
   - source: the exact English string above
   - translation:
-    `"Configurando uma pasta grande — esta sincronização inicial pode demorar e o aplicativo pode ficar mais lento que o normal."`
+    `"Sync de milhares de arquivos, o aplicativo pode ficar lento durante o sync"`
 - The build already globs `translations/client_*.ts` and compiles to `.qm`
   (CMakeLists.txt:345); the fork forces pt-BR via `AvuzTheme`, so the string is
   picked up automatically once present.
