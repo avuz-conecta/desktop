@@ -89,6 +89,17 @@ RowLayout {
             font.pixelSize: Style.subLinePixelSize
             wrapMode: Text.Wrap
         }
+
+        EnforcedPlainTextLabel {
+            id: largeSyncNoticeText
+
+            Layout.fillWidth: true
+
+            text: qsTr("Syncing thousands of files — the app may be slow during the sync.")
+            visible: syncStatus.largeSyncInProgress
+            font.pixelSize: Style.subLinePixelSize
+            wrapMode: Text.Wrap
+        }
     }
 
     Button {
