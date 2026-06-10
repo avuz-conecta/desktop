@@ -152,8 +152,9 @@ void BulkPropagatorDownloadJob::processChunk()
 
     // Process a bounded chunk and yield to the event loop between chunks. Creating
     // every placeholder + metadata for 100k+ files in one synchronous pass froze
-    // the GUI thread; chunking lets the UI repaint while the bulk job runs.
-    constexpr auto chunkSize = 1000;
+    // the GUI thread; chunking lets the UI repaint while the bulk job runs. Kept
+    // small so each synchronous burst stays short (smoother GUI).
+    constexpr auto chunkSize = 250;
     const auto total = _filesToDownload.size();
     const auto end = qMin(_nextFileToProcess + chunkSize, total);
 
