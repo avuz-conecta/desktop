@@ -123,7 +123,10 @@ void SyncRunFileLog::logItem(const SyncFileItem &item)
     _out << QString::number(item._previousModtime) << L;
     _out << item._requestId << L;
 
-    _out << Qt::endl;
+    // Use '\n', not Qt::endl: Qt::endl flushes to disk every call, which becomes a
+    // per-item fsync on the GUI thread - 100k+ flushes (and lag) on a huge sync.
+    // The stream is flushed when the log is closed / the sync finishes.
+    _out << QLatin1Char('\n');
 }
 
 void SyncRunFileLog::logLap(const QString &name)
