@@ -224,10 +224,10 @@ void DiscoveryPhase::enqueueDirectoryToDelete(const QString &path, ProcessDirect
 
 bool DiscoveryPhase::recursiveCheckForDeletedParents(const QString &itemPath) const
 {
-    const auto &allKeys = _deletedItem.keys();
-    qCDebug(lcDiscovery()) << allKeys.join(", ");
-
-    auto result = false;
+    // Walk the path's ancestors and return true if any is a deleted directory.
+    // NOTE: do NOT build _deletedItem.keys() here - this runs once per discovered
+    // item, and the map grows to 100k+ during a large sync, so an O(n) keys()
+    // copy per call becomes O(n^2) and freezes discovery. find() is O(log n).
     const auto &pathElements = itemPath.split('/');
     auto currentParentFolder = QString{};
     for (const auto &onePathComponent : pathElements) {
@@ -236,17 +236,15 @@ bool DiscoveryPhase::recursiveCheckForDeletedParents(const QString &itemPath) co
         }
         currentParentFolder += onePathComponent;
 
-        qCDebug(lcDiscovery()) << "checks" << currentParentFolder << "for" << allKeys.join(", ");
         if (_deletedItem.find(currentParentFolder) == _deletedItem.end()) {
             continue;
         }
 
-        qCDebug(lcDiscovery()) << "deleted parent found";
-        result = true;
-        break;
+        qCDebug(lcDiscovery()) << "deleted parent found" << currentParentFolder;
+        return true;
     }
 
-    return result;
+    return false;
 }
 
 void DiscoveryPhase::markPermanentDeletionRequests()
