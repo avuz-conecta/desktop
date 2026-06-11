@@ -6821,7 +6821,7 @@ Servidor respondeu com erro: %2</translation>
     <name>SyncStatus</name>
     <message>
         <source>Syncing thousands of files — the app may be slow during the sync.</source>
-        <translation>Sync de milhares de arquivos, o aplicativo pode ficar lento durante o sync</translation>
+        <translation>Baixando milhares de arquivos — o aplicativo pode ficar lento</translation>
     </message>
     <message>
         <location filename="../src/gui/tray/SyncStatus.qml" line="99"/>
