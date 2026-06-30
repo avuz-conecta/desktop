@@ -138,6 +138,41 @@ begin
   Result := True;
 end;
 
+procedure RemoveNavigationPaneEntries();
+const
+  NavNameSpaceKey = 'Software\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace';
+  HideDesktopIconsKey = 'Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel';
+var
+  Clsids: TArrayOfString;
+  I, ResultCode: Integer;
+  AppName, Clsid: String;
+begin
+  if not RegGetSubkeyNames(HKEY_CURRENT_USER, NavNameSpaceKey, Clsids) then
+    exit;
+  for I := 0 to GetArrayLength(Clsids) - 1 do
+  begin
+    Clsid := Clsids[I];
+    if RegQueryStringValue(HKEY_CURRENT_USER, NavNameSpaceKey + '\' + Clsid, 'ApplicationName', AppName) then
+    begin
+      if (AppName = 'Avuz Conecta') or (AppName = 'Avuz ConectaDev') then
+      begin
+        // Visible pin + desktop-hide flag (not WOW6432 redirected).
+        RegDeleteKeyIncludingSubkeys(HKEY_CURRENT_USER, NavNameSpaceKey + '\' + Clsid);
+        RegDeleteValue(HKEY_CURRENT_USER, HideDesktopIconsKey, Clsid);
+        // Backing CLSID in both registry views (x64 client wrote native + Wow6432Node).
+        Exec('reg.exe', 'delete "HKCU\Software\Classes\CLSID\' + Clsid + '" /reg:64 /f', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+        Exec('reg.exe', 'delete "HKCU\Software\Classes\CLSID\' + Clsid + '" /reg:32 /f', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+      end;
+    end;
+  end;
+end;
+
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+begin
+  if CurUninstallStep = usUninstall then
+    RemoveNavigationPaneEntries();
+end;
+
 function PrepareToInstall(var NeedsRestart: Boolean): String;
 begin
   Result := '';
