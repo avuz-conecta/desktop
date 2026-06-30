@@ -97,6 +97,47 @@ begin
   Exec('taskkill.exe', '/F /IM nextcloud.exe', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 end;
 
+function ProcessRunning(const ExeName: String): Boolean;
+var
+  ResultCode: Integer;
+begin
+  Result := Exec('cmd.exe',
+    '/C tasklist /FI "IMAGENAME eq ' + ExeName + '" /NH | findstr /I "' + ExeName + '" >nul',
+    '', SW_HIDE, ewWaitUntilTerminated, ResultCode) and (ResultCode = 0);
+end;
+
+procedure CloseAvuzProcesses();
+var
+  ResultCode, Waited: Integer;
+begin
+  // Graceful WM_CLOSE (no /F). Tray app may ignore; force fallback below.
+  Exec('taskkill.exe', '/IM avuzconecta.exe', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  Exec('taskkill.exe', '/IM avuzconectadev.exe', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+
+  // Poll up to 10 s for graceful exit.
+  Waited := 0;
+  while (Waited < 10000) and (ProcessRunning('avuzconecta.exe') or ProcessRunning('avuzconectadev.exe')) do
+  begin
+    Sleep(500);
+    Waited := Waited + 500;
+  end;
+
+  // Force fallback for whatever is still alive.
+  if ProcessRunning('avuzconecta.exe') then
+    Exec('taskkill.exe', '/F /IM avuzconecta.exe', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  if ProcessRunning('avuzconectadev.exe') then
+    Exec('taskkill.exe', '/F /IM avuzconectadev.exe', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+
+  // Settle so the OS releases file handles before file removal.
+  Sleep(1000);
+end;
+
+function InitializeUninstall(): Boolean;
+begin
+  CloseAvuzProcesses();
+  Result := True;
+end;
+
 function PrepareToInstall(var NeedsRestart: Boolean): String;
 begin
   Result := '';
