@@ -87,6 +87,10 @@ Type: filesandordirs; Name: "{app}"
 Type: filesandordirs; Name: "{userappdata}\Avuz\Avuz Conecta"
 
 [Code]
+const
+  NavNameSpaceKey = 'Software\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace';
+  HideDesktopIconsKey = 'Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel';
+
 // Kill running processes before cleanup
 procedure KillRunningProcesses();
 var
@@ -139,9 +143,6 @@ begin
 end;
 
 procedure RemoveNavigationPaneEntries();
-const
-  NavNameSpaceKey = 'Software\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace';
-  HideDesktopIconsKey = 'Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel';
 var
   Clsids: TArrayOfString;
   I, ResultCode: Integer;
